@@ -79,6 +79,19 @@
   <span id="next-link"></span>
 </nav>
 <script>
+function parseText(text) {
+  // **太字** を <strong> に変換
+  return text
+    .split(/\n\n+/)
+    .map(p => {
+      const html = p
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      return `<p>${html}</p>`;
+    })
+    .join('');
+}
+
 const params = new URLSearchParams(location.search);
 const date = params.get('date');
 
@@ -88,23 +101,16 @@ if (!date) {
   document.getElementById('title').textContent = date;
   document.title = date;
 
-  // エントリー本文とindex.jsonを並行取得
   Promise.all([
     fetch(`entries/${date}.json`).then(r => r.json()),
     fetch('index.json').then(r => r.json())
   ]).then(([entry, dates]) => {
     document.getElementById('loading').remove();
 
-    // 本文
     if (entry.text) {
-      const el = document.getElementById('content');
-      el.innerHTML = entry.text
-        .split(/\n\n+/)
-        .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-        .join('');
+      document.getElementById('content').innerHTML = parseText(entry.text);
     }
 
-    // 画像
     if (entry.images && entry.images.length) {
       const imgDiv = document.getElementById('images');
       entry.images.forEach(src => {
@@ -115,7 +121,6 @@ if (!date) {
       });
     }
 
-    // 前後ナビ
     const sorted = [...dates].sort((a, b) => b.localeCompare(a));
     const idx = sorted.indexOf(date);
     const nav = document.getElementById('nav');
