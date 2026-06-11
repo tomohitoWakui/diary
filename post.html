@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>post</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: #fff;
+    color: #111;
+    padding: 2rem 1.5rem;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111; color: #eee; }
+    input, textarea {
+      background: #222;
+      color: #eee;
+      border-color: #444;
+    }
+    input:focus, textarea:focus { border-color: #888; }
+    #json-preview { background: #1a1a1a; border-color: #333; color: #aaa; }
+  }
+  h1 { font-size: 1rem; font-weight: 400; color: #999; margin-bottom: 2rem; letter-spacing: 0.05em; }
+  label { display: block; font-size: 0.8rem; color: #999; margin-bottom: 0.4rem; letter-spacing: 0.04em; }
+  input[type="text"], input[type="password"], input[type="date"], textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 1.5rem;
+  }
+  input:focus, textarea:focus { border-color: #999; }
+  textarea { height: 240px; resize: vertical; line-height: 1.7; }
+  button {
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+  button:hover { background: #444; }
+  @media (prefers-color-scheme: dark) {
+    button { background: #eee; color: #111; }
+    button:hover { background: #bbb; }
+  }
+  #login-form, #post-form { }
+  #post-form { display: none; }
+  #step2 { display: none; }
+  #json-preview {
+    background: #f5f5f5;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 1rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  .note {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  .note a { color: #999; }
+  .note strong { color: #555; font-weight: 500; }
+  #copy-btn { margin-right: 0.5rem; }
+  #msg { font-size: 0.85rem; color: #999; margin-top: 1rem; }
+  .step-label {
+    font-size: 0.75rem;
+    color: #bbb;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.04em;
+  }
+  hr { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<h1>post</h1>
+
+<!-- ログイン -->
+<div id="login-form">
+  <label for="pw">password</label>
+  <input type="password" id="pw" placeholder="" autocomplete="current-password">
+  <button onclick="login()">enter</button>
+  <div id="login-msg" style="font-size:0.85rem;color:#c00;margin-top:0.8rem;"></div>
+</div>
+
+<!-- 投稿フォーム -->
+<div id="post-form">
+
+  <!-- Step 1: 入力 -->
+  <div id="step1">
+    <div class="step-label">step 1 — write</div>
+    <label for="date">date</label>
+    <input type="date" id="date">
+
+    <label for="text">text</label>
+    <textarea id="text" placeholder="今日のこと..."></textarea>
+
+    <label for="images">images（任意）</label>
+    <input type="text" id="images" placeholder="images/2026-06-12-1.jpg, images/2026-06-12-2.jpg">
+    <div class="note">画像はGitHubの <code>images/</code> フォルダにアップロードしてからパスを書く。複数はカンマ区切り。不要なら空欄。</div>
+
+    <button onclick="generate()">次へ →</button>
+  </div>
+
+  <hr>
+
+  <!-- Step 2: JSONをコピーしてGitHubに貼る -->
+  <div id="step2">
+    <div class="step-label">step 2 — update entries.json on github</div>
+
+    <div class="note">
+      下のJSONをコピーして、GitHubの <strong>entries.json</strong> を編集画面で<strong>全部置き換えて</strong>貼り付け → Commit changes。
+    </div>
+
+    <div id="json-preview"></div>
+
+    <button id="copy-btn" onclick="copyJSON()">JSONをコピー</button>
+    <a href="https://github.com/tomohitowakui/diary/edit/main/entries.json" target="_blank">
+      <button type="button">GitHubで開く →</button>
+    </a>
+
+    <div id="msg"></div>
+  </div>
+
+</div>
+
+<script>
+const PASSWORD = 'tomo0128';
+
+function login() {
+  const val = document.getElementById('pw').value;
+  if (val === PASSWORD) {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('post-form').style.display = 'block';
+    // 今日の日付をセット
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+  } else {
+    document.getElementById('login-msg').textContent = 'wrong password.';
+  }
+}
+
+document.getElementById('pw').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+let generatedJSON = '';
+
+async function generate() {
+  const date = document.getElementById('date').value;
+  const text = document.getElementById('text').value.trim();
+  const imagesRaw = document.getElementById('images').value.trim();
+
+  if (!date || !text) {
+    alert('date と text は必須です');
+    return;
+  }
+
+  const images = imagesRaw
+    ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  // 既存の entries.json を fetch して先頭に追加
+  let entries = [];
+  try {
+    const res = await fetch('entries.json?t=' + Date.now());
+    entries = await res.json();
+  } catch(e) {
+    entries = [];
+  }
+
+  // 同じ日付があれば上書き
+  entries = entries.filter(e => e.date !== date);
+  entries.unshift({ date, text, images });
+  // 新しい順にソート
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+
+  generatedJSON = JSON.stringify(entries, null, 2);
+  document.getElementById('json-preview').textContent = generatedJSON;
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyJSON() {
+  navigator.clipboard.writeText(generatedJSON).then(() => {
+    document.getElementById('msg').textContent = '✓ コピーしました。GitHubで entries.json を開いて全部貼り替えてください。';
+  });
+}
+</script>
+</body>
+</html>
