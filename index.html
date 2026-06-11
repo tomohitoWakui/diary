@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>diary</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: #fff;
+    color: #111;
+    padding: 2rem 1.5rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111; color: #eee; }
+    a { color: #eee; }
+    a:hover { color: #aaa; }
+  }
+  h1 {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #999;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+  ul { list-style: none; }
+  li { margin-bottom: 0.6rem; }
+  a {
+    color: #111;
+    text-decoration: none;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  a:hover { color: #999; }
+  #loading { color: #999; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>diary</h1>
+<div id="loading">loading...</div>
+<ul id="list"></ul>
+<script>
+fetch('entries.json')
+  .then(r => r.json())
+  .then(entries => {
+    document.getElementById('loading').remove();
+    const ul = document.getElementById('list');
+    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+    sorted.forEach(e => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="entry.html?date=${e.date}">${e.date}</a>`;
+      ul.appendChild(li);
+    });
+  })
+  .catch(() => {
+    document.getElementById('loading').textContent = 'no entries yet.';
+  });
+</script>
+</body>
+</html>
