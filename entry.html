@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>diary</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
     background: #fff;
     color: #111;
     padding: 2rem 1.5rem;
@@ -21,7 +22,6 @@
     a:hover { color: #aaa; }
     nav a { color: #999; }
     nav a:hover { color: #eee; }
-    img { opacity: 0.9; }
   }
   header {
     display: flex;
@@ -43,7 +43,6 @@
   }
   #content {
     font-size: 1rem;
-    white-space: pre-wrap;
     word-break: break-word;
     margin-bottom: 3rem;
   }
@@ -54,26 +53,16 @@
     gap: 1rem;
     margin-bottom: 3rem;
   }
-  #images img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-  }
+  #images img { max-width: 100%; height: auto; display: block; }
   nav {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
     border-top: 1px solid #eee;
     padding-top: 1rem;
-    margin-top: 1rem;
   }
-  nav a {
-    color: #999;
-    text-decoration: none;
-    letter-spacing: 0.04em;
-  }
+  nav a { color: #999; text-decoration: none; letter-spacing: 0.04em; }
   nav a:hover { color: #111; }
-  nav span { color: #ddd; }
   #loading { color: #999; font-size: 0.9rem; }
 </style>
 </head>
@@ -99,65 +88,50 @@ if (!date) {
   document.getElementById('title').textContent = date;
   document.title = date;
 
-  fetch('entries.json')
-    .then(r => r.json())
-    .then(entries => {
-      document.getElementById('loading').remove();
-      const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-      const idx = sorted.findIndex(e => e.date === date);
+  // エントリー本文とindex.jsonを並行取得
+  Promise.all([
+    fetch(`entries/${date}.json`).then(r => r.json()),
+    fetch('index.json').then(r => r.json())
+  ]).then(([entry, dates]) => {
+    document.getElementById('loading').remove();
 
-      if (idx === -1) {
-        document.getElementById('content').textContent = 'entry not found.';
-        return;
-      }
+    // 本文
+    if (entry.text) {
+      const el = document.getElementById('content');
+      el.innerHTML = entry.text
+        .split(/\n\n+/)
+        .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+        .join('');
+    }
 
-      const entry = sorted[idx];
+    // 画像
+    if (entry.images && entry.images.length) {
+      const imgDiv = document.getElementById('images');
+      entry.images.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        imgDiv.appendChild(img);
+      });
+    }
 
-      // text
-      if (entry.text) {
-        const el = document.getElementById('content');
-        el.innerHTML = entry.text
-          .split(/\n\n+/)
-          .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-          .join('');
-      }
+    // 前後ナビ
+    const sorted = [...dates].sort((a, b) => b.localeCompare(a));
+    const idx = sorted.indexOf(date);
+    const nav = document.getElementById('nav');
+    nav.style.display = 'flex';
 
-      // images
-      if (entry.images && entry.images.length) {
-        const imgDiv = document.getElementById('images');
-        entry.images.forEach(src => {
-          const img = document.createElement('img');
-          img.src = src;
-          img.alt = '';
-          imgDiv.appendChild(img);
-        });
-      }
+    const prev = sorted[idx + 1];
+    const next = sorted[idx - 1];
 
-      // nav
-      const nav = document.getElementById('nav');
-      nav.style.display = 'flex';
+    document.getElementById('prev-link').innerHTML =
+      prev ? `<a href="entry.html?date=${prev}">← ${prev}</a>` : '';
+    document.getElementById('next-link').innerHTML =
+      next ? `<a href="entry.html?date=${next}">${next} →</a>` : '';
 
-      const prevEntry = sorted[idx + 1];
-      const nextEntry = sorted[idx - 1];
-
-      const prevEl = document.getElementById('prev-link');
-      const nextEl = document.getElementById('next-link');
-
-      if (prevEntry) {
-        prevEl.innerHTML = `<a href="entry.html?date=${prevEntry.date}">← ${prevEntry.date}</a>`;
-      } else {
-        prevEl.innerHTML = `<span></span>`;
-      }
-
-      if (nextEntry) {
-        nextEl.innerHTML = `<a href="entry.html?date=${nextEntry.date}">${nextEntry.date} →</a>`;
-      } else {
-        nextEl.innerHTML = `<span></span>`;
-      }
-    })
-    .catch(() => {
-      document.getElementById('loading').textContent = 'failed to load entries.';
-    });
+  }).catch(() => {
+    document.getElementById('loading').textContent = 'entry not found.';
+  });
 }
 </script>
 </body>
