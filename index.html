@@ -21,24 +21,12 @@
   h1 { font-size: 1rem; font-weight: 400; color: #999; margin-bottom: 2rem; }
   #list { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; }
   #list li a { display: block; text-decoration: none; }
-  .bg {
-    background: #f0f0f0;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
+  .bg { background: #f0f0f0; overflow: hidden; }
   .bg img {
     display: block;
-    object-fit: cover;
-    flex-shrink: 0;
+    object-fit: cover !important;
   }
-  .date {
-    display: block;
-    font-size: 0.7rem;
-    color: #111;
-    margin-top: 4px;
-    overflow: hidden;
-    white-space: nowrap;
-  }
+  .date { display: block; font-size: 0.7rem; color: #111; margin-top: 4px; }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   a:hover .date { color: #999; }
   #loading { color: #999; font-size: 0.9rem; }
@@ -58,15 +46,18 @@ function getSize() {
   return Math.floor((W - GAP * (cols - 1)) / cols);
 }
 
-function setSize(S) {
+function applySize() {
+  const S = getSize();
   document.querySelectorAll('.bg').forEach(el => {
-    el.style.cssText = `width:${S}px !important; height:${S}px !important;`;
+    el.setAttribute('style', 'width:' + S + 'px !important; height:' + S + 'px !important;');
   });
   document.querySelectorAll('.bg img').forEach(el => {
-    el.style.cssText = `width:${S}px !important; height:${S}px !important; object-fit:cover;`;
+    el.setAttribute('width', S);
+    el.setAttribute('height', S);
+    el.setAttribute('style', 'width:' + S + 'px !important; height:' + S + 'px !important; object-fit:cover !important;');
   });
   document.querySelectorAll('.date').forEach(el => {
-    el.style.cssText = `width:${S}px !important; display:block;`;
+    el.setAttribute('style', 'width:' + S + 'px !important; display:block !important;');
   });
 }
 
@@ -78,19 +69,21 @@ fetch('index.json')
     const sorted = [...entries].sort((a, b) => b[0].localeCompare(a[0]));
 
     sorted.forEach(([date, thumb]) => {
-      const li   = document.createElement('li');
-      const a    = document.createElement('a');
-      a.href     = 'entry.html?date=' + date;
-      const bg   = document.createElement('div');
+      const li  = document.createElement('li');
+      const a   = document.createElement('a');
+      a.href    = 'entry.html?date=' + date;
+      const bg  = document.createElement('div');
       bg.className = 'bg';
       if (thumb) {
-        const img    = document.createElement('img');
-        img.src      = thumb;
-        img.alt      = '';
-        img.loading  = 'lazy';
+        const img   = document.createElement('img');
+        img.src     = thumb;
+        img.alt     = '';
+        img.loading = 'lazy';
+        // onloadで再適用
+        img.onload  = applySize;
         bg.appendChild(img);
       }
-      const span      = document.createElement('span');
+      const span = document.createElement('span');
       span.className  = 'date';
       span.textContent = date;
       a.appendChild(bg);
@@ -99,15 +92,8 @@ fetch('index.json')
       ul.appendChild(li);
     });
 
-    // DOMが描画されてからサイズをセット
-    requestAnimationFrame(() => {
-      setSize(getSize());
-    });
-
-    window.addEventListener('resize', () => setSize(getSize()));
-  })
-  .catch(() => {
-    document.getElementById('loading').textContent = 'no entries yet.';
+    applySize();
+    window.addEventListener('resize', applySize);
   });
 </script>
 </body>
