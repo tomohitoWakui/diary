@@ -15,7 +15,7 @@
   }
   @media (prefers-color-scheme: dark) {
     body { background: #111; color: #eee; }
-    .thumb-wrap { background: #222; }
+    .thumb { background: #222; }
     .date { color: #eee; }
     .entry-link:hover .date { color: #aaa; }
   }
@@ -36,16 +36,16 @@
     text-decoration: none;
     display: block;
   }
-  .thumb-wrap {
-    width: 100%;
-    background: #f0f0f0;
-    overflow: hidden;
+  /* container-type でセル幅を基準にする */
+  li {
+    container-type: inline-size;
   }
-  .thumb-wrap img {
+  .thumb {
     width: 100%;
-    height: 100%;
+    height: 100cqi; /* コンテナ幅と同じ高さ = 正方形 */
     object-fit: cover;
     display: block;
+    background: #f0f0f0;
   }
   .date {
     display: block;
@@ -72,58 +72,28 @@ fetch('index.json')
   .then(entries => {
     document.getElementById('loading').remove();
     const ul = document.getElementById('list');
-
-    // グリッドの列幅を計算してから描画
     const sorted = [...entries].sort((a, b) => b[0].localeCompare(a[0]));
+    sorted.forEach(([date, thumb]) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'entry-link';
+      a.href = `entry.html?date=${date}`;
 
-    function render() {
-      // 1列の実際のpx幅を取得
-      const colWidth = Math.floor((ul.getBoundingClientRect().width - (1.2 * 16 * 5)) / 6) || 120;
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src = thumb || '';
+      img.alt = '';
+      img.loading = 'lazy';
 
-      sorted.forEach(([date, thumb]) => {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.className = 'entry-link';
-        a.href = `entry.html?date=${date}`;
+      const dateEl = document.createElement('span');
+      dateEl.className = 'date';
+      dateEl.textContent = date;
 
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb-wrap';
-
-        if (thumb) {
-          const img = document.createElement('img');
-          img.src = thumb;
-          img.alt = '';
-          img.loading = 'lazy';
-          // onloadでラップの高さを画像の実際の幅に合わせる
-          img.style.width = '100%';
-          img.style.height = 'auto';
-          wrap.appendChild(img);
-        }
-
-        const dateEl = document.createElement('span');
-        dateEl.className = 'date';
-        dateEl.textContent = date;
-
-        a.appendChild(wrap);
-        a.appendChild(dateEl);
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-
-      // ResizeObserverで列幅変化時に正方形を維持
-      const ro = new ResizeObserver(() => {
-        ul.querySelectorAll('.thumb-wrap').forEach(wrap => {
-          wrap.style.height = wrap.offsetWidth + 'px';
-        });
-      });
-      ro.observe(ul);
-      // 初回適用
-      ul.querySelectorAll('.thumb-wrap').forEach(wrap => {
-        wrap.style.height = wrap.offsetWidth + 'px';
-      });
-    }
-
-    render();
+      a.appendChild(img);
+      a.appendChild(dateEl);
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
   })
   .catch(() => {
     document.getElementById('loading').textContent = 'no entries yet.';
