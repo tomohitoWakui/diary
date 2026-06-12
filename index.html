@@ -79,9 +79,6 @@ fetch('index.json')
         img.src     = thumb;
         img.alt     = '';
         img.loading = 'lazy';
-        img.onload  = applySize;
-        // キャッシュ済みの場合はonloadが発火しないので即チェック
-        if (img.complete) applySize();
         bg.appendChild(img);
       }
       const span = document.createElement('span');
@@ -95,6 +92,8 @@ fetch('index.json')
 
     applySize();
     window.addEventListener('resize', applySize);
+    // 全リソース読み込み完了後に再適用
+    window.addEventListener('load', applySize);
   });
 </script>
 </body>
