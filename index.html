@@ -22,10 +22,7 @@
   #list { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; }
   #list li a { display: block; text-decoration: none; }
   .bg { background: #f0f0f0; overflow: hidden; }
-  .bg img {
-    display: block;
-    object-fit: cover !important;
-  }
+  .bg img { display: block; object-fit: cover !important; }
   .date { display: block; font-size: 0.7rem; color: #111; margin-top: 4px; }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   a:hover .date { color: #999; }
@@ -49,15 +46,17 @@ function getSize() {
 function applySize() {
   const S = getSize();
   document.querySelectorAll('.bg').forEach(el => {
-    el.setAttribute('style', 'width:' + S + 'px !important; height:' + S + 'px !important;');
+    el.style.width = S + 'px';
+    el.style.height = S + 'px';
   });
   document.querySelectorAll('.bg img').forEach(el => {
     el.setAttribute('width', S);
     el.setAttribute('height', S);
-    el.setAttribute('style', 'width:' + S + 'px !important; height:' + S + 'px !important; object-fit:cover !important;');
+    el.style.width = S + 'px';
+    el.style.height = S + 'px';
   });
   document.querySelectorAll('.date').forEach(el => {
-    el.setAttribute('style', 'width:' + S + 'px !important; display:block !important;');
+    el.style.width = S + 'px';
   });
 }
 
@@ -79,12 +78,11 @@ fetch('index.json')
         img.src     = thumb;
         img.alt     = '';
         img.loading = 'lazy';
-        // onloadで再適用
         img.onload  = applySize;
         bg.appendChild(img);
       }
       const span = document.createElement('span');
-      span.className  = 'date';
+      span.className   = 'date';
       span.textContent = date;
       a.appendChild(bg);
       a.appendChild(span);
