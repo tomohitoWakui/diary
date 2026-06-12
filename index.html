@@ -80,6 +80,8 @@ fetch('index.json')
         img.alt     = '';
         img.loading = 'lazy';
         img.onload  = applySize;
+        // キャッシュ済みの場合はonloadが発火しないので即チェック
+        if (img.complete) applySize();
         bg.appendChild(img);
       }
       const span = document.createElement('span');
