@@ -15,7 +15,7 @@
   }
   @media (prefers-color-scheme: dark) {
     body { background: #111; color: #eee; }
-    .thumb { background: #222; }
+    .cell-bg { background: #222; }
     .date { color: #eee; }
     a:hover .date { color: #aaa; }
   }
@@ -27,26 +27,31 @@
     letter-spacing: 0.05em;
   }
   #list {
+    list-style: none;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    list-style: none;
   }
-  li a {
+  #list li a {
+    display: block;
     text-decoration: none;
-    display: block;
   }
-  .thumb {
-    display: block;
-    object-fit: cover;
+  /* 正方形コンテナ: divにwidthとheightをJSで同じ値をセット */
+  .cell-bg {
     background: #f0f0f0;
+    overflow: hidden;
+  }
+  .cell-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .date {
     display: block;
     font-size: 0.7rem;
-    letter-spacing: 0.02em;
     color: #111;
-    margin-top: 0.35rem;
+    margin-top: 0.3rem;
     white-space: nowrap;
   }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
@@ -59,26 +64,6 @@
 <div id="loading">loading...</div>
 <ul id="list"></ul>
 <script>
-const GAP = 12;
-const MIN = 100;
-
-function calcSize() {
-  const w = document.getElementById('list').offsetWidth;
-  const cols = Math.floor((w + GAP) / (MIN + GAP));
-  const size = Math.floor((w - GAP * (cols - 1)) / cols);
-  return size;
-}
-
-function applySize(size) {
-  document.querySelectorAll('.thumb').forEach(img => {
-    img.style.width = size + 'px';
-    img.style.height = size + 'px';
-  });
-  document.querySelectorAll('.date').forEach(el => {
-    el.style.width = size + 'px';
-  });
-}
-
 fetch('index.json')
   .then(r => r.json())
   .then(entries => {
@@ -89,34 +74,52 @@ fetch('index.json')
     sorted.forEach(([date, thumb]) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
-      a.href = `entry.html?date=${date}`;
+      a.href = 'entry.html?date=' + date;
 
-      const img = document.createElement('img');
-      img.className = 'thumb';
-      img.src = thumb || '';
-      img.alt = '';
-      img.loading = 'lazy';
+      const bg = document.createElement('div');
+      bg.className = 'cell-bg';
+
+      if (thumb) {
+        const img = document.createElement('img');
+        img.src = thumb;
+        img.alt = '';
+        img.loading = 'lazy';
+        bg.appendChild(img);
+      }
 
       const dateEl = document.createElement('span');
       dateEl.className = 'date';
       dateEl.textContent = date;
 
-      a.appendChild(img);
+      a.appendChild(bg);
       a.appendChild(dateEl);
       li.appendChild(a);
       ul.appendChild(li);
     });
 
-    const size = calcSize();
-    applySize(size);
-
-    window.addEventListener('resize', () => {
-      applySize(calcSize());
-    });
+    setSize();
+    window.addEventListener('resize', setSize);
   })
   .catch(() => {
     document.getElementById('loading').textContent = 'no entries yet.';
   });
+
+function setSize() {
+  const ul = document.getElementById('list');
+  const totalW = ul.offsetWidth;
+  const gap = 12;
+  const minSize = 100;
+  const cols = Math.max(1, Math.floor((totalW + gap) / (minSize + gap)));
+  const size = Math.floor((totalW - gap * (cols - 1)) / cols);
+
+  ul.querySelectorAll('.cell-bg').forEach(el => {
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+  });
+  ul.querySelectorAll('.date').forEach(el => {
+    el.style.width = size + 'px';
+  });
+}
 </script>
 </body>
 </html>
