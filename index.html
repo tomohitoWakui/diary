@@ -28,21 +28,19 @@
   }
   #list {
     list-style: none;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
-  }
-  #list li {
-    /* 幅はJSでセット */
   }
   #list li a {
     display: block;
     text-decoration: none;
   }
   .cell-bg {
+    width: 100%;
+    aspect-ratio: 1 / 1;
     background: #f0f0f0;
     overflow: hidden;
-    /* 幅・高さはJSでセット */
   }
   .cell-bg img {
     width: 100%;
@@ -55,8 +53,10 @@
     font-size: 0.7rem;
     color: #111;
     margin-top: 0.3rem;
-    text-align: left;
-    /* 幅はJSでliと同じ値をセット */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
   }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   a:hover .date { color: #999; }
@@ -74,16 +74,12 @@ fetch('index.json')
     document.getElementById('loading').remove();
     const ul = document.getElementById('list');
     const sorted = [...entries].sort((a, b) => b[0].localeCompare(a[0]));
-
     sorted.forEach(([date, thumb]) => {
       const li = document.createElement('li');
-
       const a = document.createElement('a');
       a.href = 'entry.html?date=' + date;
-
       const bg = document.createElement('div');
       bg.className = 'cell-bg';
-
       if (thumb) {
         const img = document.createElement('img');
         img.src = thumb;
@@ -91,45 +87,18 @@ fetch('index.json')
         img.loading = 'lazy';
         bg.appendChild(img);
       }
-
       const dateEl = document.createElement('span');
       dateEl.className = 'date';
       dateEl.textContent = date;
-
       a.appendChild(bg);
       a.appendChild(dateEl);
       li.appendChild(a);
       ul.appendChild(li);
     });
-
-    setSize();
-    window.addEventListener('resize', setSize);
   })
   .catch(() => {
     document.getElementById('loading').textContent = 'no entries yet.';
   });
-
-function setSize() {
-  const ul = document.getElementById('list');
-  const totalW = ul.offsetWidth;
-  const gap = 12;
-  const minSize = 100;
-  const cols = Math.max(1, Math.floor((totalW + gap) / (minSize + gap)));
-  const size = Math.floor((totalW - gap * (cols - 1)) / cols);
-
-  // li・cell-bg・dateすべてに同じwidthをセット
-  ul.querySelectorAll('li').forEach(li => {
-    li.style.width = size + 'px';
-  });
-  ul.querySelectorAll('.cell-bg').forEach(el => {
-    el.style.width = size + 'px';
-    el.style.height = size + 'px';
-  });
-  ul.querySelectorAll('.date').forEach(el => {
-    el.style.width = size + 'px';
-    el.style.display = 'block';
-  });
-}
 </script>
 </body>
 </html>
