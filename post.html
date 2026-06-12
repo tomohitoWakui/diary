@@ -44,13 +44,14 @@
   .step { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee; display: none; }
   .step-label { font-size: 0.75rem; color: #bbb; margin-bottom: 1rem; letter-spacing: 0.04em; }
   .note { font-size: 0.8rem; color: #999; margin-bottom: 1rem; line-height: 1.6; }
+  .note code { background: #f5f5f5; padding: 0.1em 0.3em; border-radius: 2px; }
   .json-box {
     background: #f5f5f5; border: 1px solid #eee; border-radius: 4px;
     padding: 1rem; font-size: 0.75rem; font-family: monospace;
     white-space: pre-wrap; word-break: break-all; margin-bottom: 1rem; line-height: 1.6;
   }
-  #msg { font-size: 0.85rem; color: #999; margin-top: 1rem; }
   #login-msg { font-size: 0.85rem; color: #c00; margin-top: 0.8rem; }
+  .msg { font-size: 0.85rem; color: #999; margin-top: 0.8rem; }
 </style>
 </head>
 <body>
@@ -66,30 +67,36 @@
 <div id="post-form">
   <label for="date">date</label>
   <input type="date" id="date">
-  <label for="text">text</label>
+
+  <label for="text">text（**太字**対応）</label>
   <textarea id="text" placeholder="今日のこと..."></textarea>
+
   <label for="images">images（任意、カンマ区切り）</label>
-  <input type="text" id="images" placeholder="images/2026-06-12-1.jpg">
+  <input type="text" id="images" placeholder="images/2026-06-12-1.jpg, images/2026-06-12-2.jpg">
+
+  <label for="thumb">サムネイル（任意、1枚目の画像パスをそのまま）</label>
+  <input type="text" id="thumb" placeholder="images/2026-06-12-1.jpg">
+
   <button onclick="generate()">生成 →</button>
 
-  <!-- Step 2: エントリーJSON -->
+  <!-- Step 1: エントリーJSON -->
   <div class="step" id="step-entry">
     <div class="step-label">step 1 — entries/日付.json をGitHubに作る</div>
     <div class="note"><code>entries/</code> フォルダに <strong id="entry-filename"></strong> という名前で新規ファイルを作り、下のJSONを貼る。</div>
     <div class="json-box" id="entry-json"></div>
     <button onclick="copyText('entry-json', 'msg1')">コピー</button>
     <a id="entry-link" href="#" target="_blank"><button type="button">GitHubで新規作成 →</button></a>
-    <div id="msg1" style="font-size:0.85rem;color:#999;margin-top:0.8rem;"></div>
+    <div id="msg1" class="msg"></div>
   </div>
 
-  <!-- Step 3: index.json -->
+  <!-- Step 2: index.json -->
   <div class="step" id="step-index">
     <div class="step-label">step 2 — index.json を更新する</div>
     <div class="note">GitHubの <strong>index.json</strong> を編集して、下のJSONで全部置き換える。</div>
     <div class="json-box" id="index-json"></div>
     <button onclick="copyText('index-json', 'msg2')">コピー</button>
     <a href="https://github.com/tomohitowakui/diary/edit/main/index.json" target="_blank"><button type="button">GitHubで開く →</button></a>
-    <div id="msg2" style="font-size:0.85rem;color:#999;margin-top:0.8rem;"></div>
+    <div id="msg2" class="msg"></div>
   </div>
 </div>
 
@@ -111,13 +118,23 @@ function login() {
 }
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pw').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+  // 画像欄が入力されたらサムネ欄に自動コピー
+  document.getElementById('images').addEventListener('blur', () => {
+    const thumbEl = document.getElementById('thumb');
+    if (thumbEl.value) return;
+    const first = document.getElementById('images').value.split(',')[0].trim();
+    if (first) thumbEl.value = first;
+  });
 });
 
 async function generate() {
   const date = document.getElementById('date').value;
   const text = document.getElementById('text').value.trim();
   const imagesRaw = document.getElementById('images').value.trim();
+  const thumb = document.getElementById('thumb').value.trim();
+
   if (!date || !text) { alert('date と text は必須です'); return; }
+
   const images = imagesRaw ? imagesRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
 
   // エントリーJSON
@@ -128,14 +145,18 @@ async function generate() {
     `https://github.com/tomohitowakui/diary/new/main/entries?filename=${date}.json`;
 
   // index.json を取得して更新
-  let dates = [];
+  let entries = [];
   try {
     const res = await fetch('index.json?t=' + Date.now());
-    dates = await res.json();
-  } catch(e) { dates = []; }
-  if (!dates.includes(date)) dates.push(date);
-  dates.sort((a,b) => b.localeCompare(a));
-  document.getElementById('index-json').textContent = JSON.stringify(dates, null, 2);
+    entries = await res.json();
+  } catch(e) { entries = []; }
+
+  // 同じ日付があれば上書き、なければ追加
+  entries = entries.filter(e => e[0] !== date);
+  entries.push([date, thumb]);
+  entries.sort((a, b) => b[0].localeCompare(a[0]));
+
+  document.getElementById('index-json').textContent = JSON.stringify(entries, null, 2);
 
   document.getElementById('step-entry').style.display = 'block';
   document.getElementById('step-index').style.display = 'block';
