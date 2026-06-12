@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>diary</title>
+<title>AWOL</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,11 +12,9 @@
     background: #fff;
     color: #111;
     padding: 2rem 1.5rem;
-    margin: 0 auto;
   }
   @media (prefers-color-scheme: dark) {
     body { background: #111; color: #eee; }
-    a { color: #eee; }
     .thumb-empty { background: #222; }
     .date { color: #eee; }
     .entry-link:hover .date { color: #aaa; }
@@ -30,48 +28,52 @@
   }
   #list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 1.2rem;
     list-style: none;
   }
+  li {
+    display: block;
+  }
   .entry-link {
     text-decoration: none;
-    color: #111;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    display: block;
   }
   .thumb-wrap {
+    position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    padding-top: 100%; /* 正方形 */
     overflow: hidden;
+    background: #f0f0f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .thumb-wrap { background: #222; }
   }
   .thumb {
+    position: absolute;
+    top: 0; left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
-  .thumb-empty {
-    width: 100%;
-    height: 100%;
-    background: #f0f0f0;
-    display: block;
-  }
   .date {
+    display: block;
     font-size: 0.7rem;
     letter-spacing: 0.02em;
+    color: #111;
+    margin-top: 0.35rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #111;
   }
+  @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   .entry-link:hover .date { color: #999; }
   #loading { color: #999; font-size: 0.9rem; }
 </style>
 </head>
 <body>
-<h1>diary</h1>
+<h1>AWOL</h1>
 <div id="loading">loading...</div>
 <ul id="list"></ul>
 <script>
@@ -97,10 +99,6 @@ fetch('index.json')
         img.alt = '';
         img.loading = 'lazy';
         wrap.appendChild(img);
-      } else {
-        const empty = document.createElement('span');
-        empty.className = 'thumb-empty';
-        wrap.appendChild(empty);
       }
 
       const dateEl = document.createElement('span');
