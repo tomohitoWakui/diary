@@ -15,48 +15,29 @@
   }
   @media (prefers-color-scheme: dark) {
     body { background: #111; color: #eee; }
-    .cell-bg { background: #222; }
+    .bg { background: #222; }
     .date { color: #eee; }
   }
-  h1 {
-    font-size: 1rem;
-    font-weight: 400;
-    color: #999;
-    margin-bottom: 2rem;
-    letter-spacing: 0.05em;
-  }
-  #list {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  #list li {
-    width: 120px;
-  }
-  #list li a {
-    display: block;
-    text-decoration: none;
-  }
-  .cell-bg {
-    width: 120px;
-    height: 120px;
+  h1 { font-size: 1rem; font-weight: 400; color: #999; margin-bottom: 2rem; }
+  #list { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; }
+  #list li a { display: block; text-decoration: none; }
+  .bg {
     background: #f0f0f0;
     overflow: hidden;
+    flex-shrink: 0;
   }
-  .cell-bg img {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
+  .bg img {
     display: block;
+    object-fit: cover;
+    flex-shrink: 0;
   }
   .date {
     display: block;
-    width: 120px;
     font-size: 0.7rem;
     color: #111;
-    margin-top: 0.3rem;
-    text-align: left;
+    margin-top: 4px;
+    overflow: hidden;
+    white-space: nowrap;
   }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   a:hover .date { color: #999; }
@@ -68,33 +49,62 @@
 <div id="loading">loading...</div>
 <ul id="list"></ul>
 <script>
+const GAP = 12;
+const MIN = 100;
+
+function getSize() {
+  const W = document.getElementById('list').offsetWidth;
+  const cols = Math.max(1, Math.floor((W + GAP) / (MIN + GAP)));
+  return Math.floor((W - GAP * (cols - 1)) / cols);
+}
+
+function setSize(S) {
+  document.querySelectorAll('.bg').forEach(el => {
+    el.style.cssText = `width:${S}px !important; height:${S}px !important;`;
+  });
+  document.querySelectorAll('.bg img').forEach(el => {
+    el.style.cssText = `width:${S}px !important; height:${S}px !important; object-fit:cover;`;
+  });
+  document.querySelectorAll('.date').forEach(el => {
+    el.style.cssText = `width:${S}px !important; display:block;`;
+  });
+}
+
 fetch('index.json')
   .then(r => r.json())
   .then(entries => {
     document.getElementById('loading').remove();
     const ul = document.getElementById('list');
     const sorted = [...entries].sort((a, b) => b[0].localeCompare(a[0]));
+
     sorted.forEach(([date, thumb]) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = 'entry.html?date=' + date;
-      const bg = document.createElement('div');
-      bg.className = 'cell-bg';
+      const li   = document.createElement('li');
+      const a    = document.createElement('a');
+      a.href     = 'entry.html?date=' + date;
+      const bg   = document.createElement('div');
+      bg.className = 'bg';
       if (thumb) {
-        const img = document.createElement('img');
-        img.src = thumb;
-        img.alt = '';
-        img.loading = 'lazy';
+        const img    = document.createElement('img');
+        img.src      = thumb;
+        img.alt      = '';
+        img.loading  = 'lazy';
         bg.appendChild(img);
       }
-      const dateEl = document.createElement('span');
-      dateEl.className = 'date';
-      dateEl.textContent = date;
+      const span      = document.createElement('span');
+      span.className  = 'date';
+      span.textContent = date;
       a.appendChild(bg);
-      a.appendChild(dateEl);
+      a.appendChild(span);
       li.appendChild(a);
       ul.appendChild(li);
     });
+
+    // DOMが描画されてからサイズをセット
+    requestAnimationFrame(() => {
+      setSize(getSize());
+    });
+
+    window.addEventListener('resize', () => setSize(getSize()));
   })
   .catch(() => {
     document.getElementById('loading').textContent = 'no entries yet.';
