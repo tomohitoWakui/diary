@@ -17,7 +17,7 @@
     body { background: #111; color: #eee; }
     .thumb { background: #222; }
     .date { color: #eee; }
-    .entry-link:hover .date { color: #aaa; }
+    a:hover .date { color: #aaa; }
   }
   h1 {
     font-size: 1rem;
@@ -27,24 +27,18 @@
     letter-spacing: 0.05em;
   }
   #list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     list-style: none;
   }
-  .entry-link {
+  li a {
     text-decoration: none;
     display: block;
   }
-  /* container-type でセル幅を基準にする */
-  li {
-    container-type: inline-size;
-  }
   .thumb {
-    width: 100%;
-    height: 100cqi; /* コンテナ幅と同じ高さ = 正方形 */
-    object-fit: cover;
     display: block;
+    object-fit: cover;
     background: #f0f0f0;
   }
   .date {
@@ -54,11 +48,9 @@
     color: #111;
     margin-top: 0.35rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
-  .entry-link:hover .date { color: #999; }
+  a:hover .date { color: #999; }
   #loading { color: #999; font-size: 0.9rem; }
 </style>
 </head>
@@ -67,16 +59,36 @@
 <div id="loading">loading...</div>
 <ul id="list"></ul>
 <script>
+const GAP = 12;
+const MIN = 100;
+
+function calcSize() {
+  const w = document.getElementById('list').offsetWidth;
+  const cols = Math.floor((w + GAP) / (MIN + GAP));
+  const size = Math.floor((w - GAP * (cols - 1)) / cols);
+  return size;
+}
+
+function applySize(size) {
+  document.querySelectorAll('.thumb').forEach(img => {
+    img.style.width = size + 'px';
+    img.style.height = size + 'px';
+  });
+  document.querySelectorAll('.date').forEach(el => {
+    el.style.width = size + 'px';
+  });
+}
+
 fetch('index.json')
   .then(r => r.json())
   .then(entries => {
     document.getElementById('loading').remove();
     const ul = document.getElementById('list');
     const sorted = [...entries].sort((a, b) => b[0].localeCompare(a[0]));
+
     sorted.forEach(([date, thumb]) => {
       const li = document.createElement('li');
       const a = document.createElement('a');
-      a.className = 'entry-link';
       a.href = `entry.html?date=${date}`;
 
       const img = document.createElement('img');
@@ -93,6 +105,13 @@ fetch('index.json')
       a.appendChild(dateEl);
       li.appendChild(a);
       ul.appendChild(li);
+    });
+
+    const size = calcSize();
+    applySize(size);
+
+    window.addEventListener('resize', () => {
+      applySize(calcSize());
     });
   })
   .catch(() => {
