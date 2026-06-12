@@ -19,9 +19,9 @@
   @media (prefers-color-scheme: dark) {
     body { background: #111; color: #eee; }
     a { color: #eee; }
-    a:hover { color: #aaa; }
     nav a { color: #999; }
     nav a:hover { color: #eee; }
+    nav { border-color: #333; }
   }
   header {
     display: flex;
@@ -60,6 +60,7 @@
     font-size: 0.85rem;
     border-top: 1px solid #eee;
     padding-top: 1rem;
+    margin-top: 1rem;
   }
   nav a { color: #999; text-decoration: none; letter-spacing: 0.04em; }
   nav a:hover { color: #111; }
@@ -74,13 +75,12 @@
 <div id="loading">loading...</div>
 <div id="content"></div>
 <div id="images"></div>
-<nav id="nav" style="display:none">
+<nav>
   <span id="prev-link"></span>
   <span id="next-link"></span>
 </nav>
 <script>
 function parseText(text) {
-  // **太字** を <strong> に変換
   return text
     .split(/\n\n+/)
     .map(p => {
@@ -104,7 +104,7 @@ if (!date) {
   Promise.all([
     fetch(`entries/${date}.json`).then(r => r.json()),
     fetch('index.json').then(r => r.json())
-  ]).then(([entry, dates]) => {
+  ]).then(([entry, entries]) => {
     document.getElementById('loading').remove();
 
     if (entry.text) {
@@ -121,10 +121,10 @@ if (!date) {
       });
     }
 
+    // index.json は [[date, thumb], ...] 形式
+    const dates = entries.map(e => e[0]);
     const sorted = [...dates].sort((a, b) => b.localeCompare(a));
     const idx = sorted.indexOf(date);
-    const nav = document.getElementById('nav');
-    nav.style.display = 'flex';
 
     const prev = sorted[idx + 1];
     const next = sorted[idx - 1];
