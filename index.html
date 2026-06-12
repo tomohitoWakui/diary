@@ -32,14 +32,17 @@
     flex-wrap: wrap;
     gap: 12px;
   }
+  #list li {
+    /* 幅はJSでセット */
+  }
   #list li a {
     display: block;
     text-decoration: none;
   }
-  /* 正方形コンテナ: divにwidthとheightをJSで同じ値をセット */
   .cell-bg {
     background: #f0f0f0;
     overflow: hidden;
+    /* 幅・高さはJSでセット */
   }
   .cell-bg img {
     width: 100%;
@@ -52,7 +55,8 @@
     font-size: 0.7rem;
     color: #111;
     margin-top: 0.3rem;
-    white-space: nowrap;
+    text-align: left;
+    /* 幅はJSでliと同じ値をセット */
   }
   @media (prefers-color-scheme: dark) { .date { color: #eee; } }
   a:hover .date { color: #999; }
@@ -73,6 +77,7 @@ fetch('index.json')
 
     sorted.forEach(([date, thumb]) => {
       const li = document.createElement('li');
+
       const a = document.createElement('a');
       a.href = 'entry.html?date=' + date;
 
@@ -112,12 +117,17 @@ function setSize() {
   const cols = Math.max(1, Math.floor((totalW + gap) / (minSize + gap)));
   const size = Math.floor((totalW - gap * (cols - 1)) / cols);
 
+  // li・cell-bg・dateすべてに同じwidthをセット
+  ul.querySelectorAll('li').forEach(li => {
+    li.style.width = size + 'px';
+  });
   ul.querySelectorAll('.cell-bg').forEach(el => {
     el.style.width = size + 'px';
     el.style.height = size + 'px';
   });
   ul.querySelectorAll('.date').forEach(el => {
     el.style.width = size + 'px';
+    el.style.display = 'block';
   });
 }
 </script>
